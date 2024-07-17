@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:video_repo/components/custom_text_field.dart';
 import 'package:video_repo/localization/strings.dart';
 import 'package:video_repo/styles/styles.dart';
@@ -18,11 +19,19 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final List<Map<String, dynamic>> _videos = [];
 
-  void _addVideo(String title, XFile videoFile) {
+  void _addVideo(String title, XFile videoFile) async {
+    final thumbnail = await VideoThumbnail.thumbnailFile(
+      video: videoFile.path,
+      imageFormat: ImageFormat.PNG,
+      maxWidth: 128,
+      quality: 25,
+    );
+
     setState(() {
       _videos.add({
         'title': title,
         'videoFile': videoFile,
+        'thumbnail': thumbnail,
       });
     });
   }
@@ -60,12 +69,15 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(AppBorders.radius),
                 ),
                 height: MediaQuery.of(context).size.height,
-                child: ListView.builder(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 1,
+                  ),
                   itemCount: _videos.length,
                   itemBuilder: (context, index) {
                     final video = _videos[index];
-                    return ListTile(
-                      title: Text(video['title']),
+                    return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
@@ -76,6 +88,23 @@ class _HomePageState extends State<HomePage> {
                           ),
                         );
                       },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: GridTile(
+                          header: GridTileBar(
+                            leading: Icon(Icons.play_arrow),
+                            backgroundColor: Colors.black54,
+                            title: Text(video['title']),
+                          ),
+                          footer: GridTileBar(
+                            backgroundColor: Colors.black54,
+                          ),
+                          child: Image.file(
+                            File(video['thumbnail']),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -125,7 +154,8 @@ class _AddVideoModalState extends State<AddVideoModal> {
   XFile? _videoFile;
 
   void _pickVideo() async {
-    final pickedFile = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickVideo(source: ImageSource.gallery);
     setState(() {
       _videoFile = pickedFile;
     });
@@ -141,8 +171,8 @@ class _AddVideoModalState extends State<AddVideoModal> {
         children: [
           const Padding(
             padding: AppPaddings.horizontal24,
-            child: Text(AppStrings.enterKeyword,
-                style: AppTextStyles.modalTitle),
+            child:
+                Text(AppStrings.enterKeyword, style: AppTextStyles.modalTitle),
           ),
           Padding(
             padding: AppPaddings.horizontal24,
@@ -164,35 +194,38 @@ class _AddVideoModalState extends State<AddVideoModal> {
               ),
               child: InkWell(
                 onTap: _pickVideo,
-                child: const Padding(
-                  padding: AppPaddings.horizontal24,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Stack(
-                        children: [
-                          Center(
-                            child: Image(
-                              height: 70,
-                              image: AssetImage('assets/images/bg.png'),
+                child: _videoFile == null
+                    ? const Padding(
+                        padding: AppPaddings.horizontal24,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Stack(
+                              children: [
+                                Center(
+                                  child: Image(
+                                    height: 70,
+                                    image: AssetImage('assets/images/bg.png'),
+                                  ),
+                                ),
+                                Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(top: 8.5),
+                                    child: Image(
+                                      height: 40,
+                                      image:
+                                          AssetImage('assets/images/video.png'),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          Center(
-                            child: Padding(
-                              padding: EdgeInsets.only(top: 8.5),
-                              child: Image(
-                                height: 40,
-                                image: AssetImage('assets/images/video.png'),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(AppStrings.selectVideo,
-                          style: AppTextStyles.selectVideoText),
-                    ],
-                  ),
-                ),
+                            Text(AppStrings.selectVideo,
+                                style: AppTextStyles.selectVideoText),
+                          ],
+                        ),
+                      )
+                    : const Center(child: Text("Video Added")),
               ),
             ),
           ),
@@ -206,7 +239,8 @@ class _AddVideoModalState extends State<AddVideoModal> {
               },
               style: ElevatedButton.styleFrom(
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.9, 49),
-                backgroundColor: AppColors.red,
+                backgroundColor:
+                    _videoFile == null ? AppColors.red : Colors.green,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppBorders.radius),
                 ),

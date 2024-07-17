@@ -33,7 +33,6 @@ class AppTextStyles {
 
   static const TextStyle selectVideoText = TextStyle(
     fontSize: 16,
-    color: AppColors.red,
     fontWeight: FontWeight.bold,
   );
 }
