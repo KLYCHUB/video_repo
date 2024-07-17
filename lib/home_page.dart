@@ -171,7 +171,7 @@ class _HomePageState extends State<HomePage> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppBorders.radius),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
                             color: Colors.black26,
                             blurRadius: 8,
@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Colors.black54,
                                 borderRadius: BorderRadius.vertical(
                                     bottom: Radius.circular(AppBorders.radius)),
@@ -287,6 +287,7 @@ class AddVideoModal extends StatefulWidget {
   const AddVideoModal({required this.onAddVideo, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AddVideoModalState createState() => _AddVideoModalState();
 }
 
@@ -365,8 +366,8 @@ class _AddVideoModalState extends State<AddVideoModal> {
                   child: InkWell(
                     onTap: _pickVideo,
                     child: _videoFile == null
-                        ? Padding(
-                            padding: const EdgeInsets.all(16.0),
+                        ? const Padding(
+                            padding: EdgeInsets.all(16.0),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -396,7 +397,7 @@ class _AddVideoModalState extends State<AddVideoModal> {
                               ],
                             ),
                           )
-                        : Center(
+                        : const Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -405,8 +406,8 @@ class _AddVideoModalState extends State<AddVideoModal> {
                                   color: Colors.green,
                                   size: 50,
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
+                                SizedBox(height: 8),
+                                Text(
                                   "Video Added",
                                   style: TextStyle(
                                     color: Colors.green,
@@ -458,6 +459,7 @@ class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({required this.videoFile, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
 }
 
