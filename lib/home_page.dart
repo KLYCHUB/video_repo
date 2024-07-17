@@ -1,13 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:video_repo/components/custom_text_field.dart';
 import 'package:video_repo/localization/strings.dart';
 import 'package:video_repo/styles/styles.dart';
 import 'package:video_repo/utils/constants.dart';
+import 'package:share_plus/share_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,7 +20,32 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<Map<String, dynamic>> _videos = [];
+  List<Map<String, dynamic>> _videos = [];
+  List<Map<String, dynamic>> _filteredVideos = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVideos();
+    _searchController.addListener(_filterVideos);
+  }
+
+  Future<void> _loadVideos() async {
+    final prefs = await SharedPreferences.getInstance();
+    final videosString = prefs.getString('videos');
+    if (videosString != null) {
+      setState(() {
+        _videos = List<Map<String, dynamic>>.from(json.decode(videosString));
+        _filteredVideos = _videos;
+      });
+    }
+  }
+
+  Future<void> _saveVideos() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('videos', json.encode(_videos));
+  }
 
   void _addVideo(String title, XFile videoFile) async {
     final thumbnail = await VideoThumbnail.thumbnailFile(
@@ -30,10 +58,82 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _videos.add({
         'title': title,
-        'videoFile': videoFile,
+        'videoFile': videoFile.path,
         'thumbnail': thumbnail,
       });
+      _filteredVideos = _videos;
+      _saveVideos();
     });
+  }
+
+  void _deleteVideo(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Video'),
+          content: Text('Are you sure you want to delete this video?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _videos.removeAt(index);
+                  _filteredVideos = _videos;
+                  _saveVideos();
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _shareVideo(String videoFilePath) {
+    XFile videoFile = XFile(videoFilePath);
+    Share.shareXFiles([videoFile], text: 'Check out this video!');
+  }
+
+  void _filterVideos() {
+    setState(() {
+      if (_searchController.text.isEmpty) {
+        _filteredVideos = _videos;
+      } else {
+        _filteredVideos = _videos
+            .where((video) => video['title']
+                .toLowerCase()
+                .contains(_searchController.text.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _showEmptySearchAlert() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Search Field Empty'),
+          content: Text('Please enter a title to search for videos.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -44,6 +144,7 @@ class _HomePageState extends State<HomePage> {
         slivers: [
           SliverAppBar(
             snap: true,
+            centerTitle: true,
             floating: true,
             title: const Padding(
               padding: AppPaddings.all8,
@@ -51,11 +152,12 @@ class _HomePageState extends State<HomePage> {
                   style: AppTextStyles.appBarTitle),
             ),
             bottom: AppBar(
-              title: const Padding(
+              title: Padding(
                 padding: AppPaddings.all8,
                 child: CustomTextField(
                   hintText: AppStrings.searchHint,
-                  icon: Icon(Icons.search, color: AppColors.black),
+                  icon: Icon(Icons.search, color: AppColors.black87),
+                  controller: _searchController,
                 ),
               ),
             ),
@@ -65,7 +167,7 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.only(top: 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.lightGray,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(AppBorders.radius),
                 ),
                 height: MediaQuery.of(context).size.height,
@@ -74,16 +176,16 @@ class _HomePageState extends State<HomePage> {
                     crossAxisCount: 2,
                     childAspectRatio: 1,
                   ),
-                  itemCount: _videos.length,
+                  itemCount: _filteredVideos.length,
                   itemBuilder: (context, index) {
-                    final video = _videos[index];
+                    final video = _filteredVideos[index];
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => VideoPlayerScreen(
-                              videoFile: video['videoFile'],
+                              videoFile: File(video['videoFile']),
                             ),
                           ),
                         );
@@ -92,12 +194,29 @@ class _HomePageState extends State<HomePage> {
                         padding: const EdgeInsets.all(8.0),
                         child: GridTile(
                           header: GridTileBar(
-                            leading: Icon(Icons.play_arrow),
+                            leading: const Icon(Icons.play_arrow),
                             backgroundColor: Colors.black54,
                             title: Text(video['title']),
                           ),
                           footer: GridTileBar(
                             backgroundColor: Colors.black54,
+                            leading: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.share),
+                                  onPressed: () {
+                                    _shareVideo(video['videoFile']);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () {
+                                    _deleteVideo(index);
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                           child: Image.file(
                             File(video['thumbnail']),
@@ -125,7 +244,8 @@ class _HomePageState extends State<HomePage> {
               );
             },
             style: ElevatedButton.styleFrom(
-              fixedSize: Size(MediaQuery.of(context).size.width * 0.9, 49),
+              elevation: 0,
+              fixedSize: Size(MediaQuery.of(context).size.width * 0.9, 55),
               backgroundColor: AppColors.red,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppBorders.radius),
@@ -167,7 +287,7 @@ class _AddVideoModalState extends State<AddVideoModal> {
       width: MediaQuery.of(context).size.width,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Padding(
             padding: AppPaddings.horizontal24,
@@ -256,7 +376,7 @@ class _AddVideoModalState extends State<AddVideoModal> {
 }
 
 class VideoPlayerScreen extends StatefulWidget {
-  final XFile videoFile;
+  final File videoFile;
 
   const VideoPlayerScreen({required this.videoFile, super.key});
 
@@ -270,7 +390,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(File(widget.videoFile.path))
+    _controller = VideoPlayerController.file(widget.videoFile)
       ..initialize().then((_) {
         setState(() {});
         _controller.play();

@@ -14,11 +14,12 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      textAlign: TextAlign.start,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: AppTextStyles.hintStyle,
         filled: true,
-        fillColor: AppColors.lightGray,
+        fillColor: AppColors.black12,
         suffixIcon: icon,
         border: OutlineInputBorder(
           borderSide: BorderSide.none,
