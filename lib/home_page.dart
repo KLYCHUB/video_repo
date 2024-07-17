@@ -71,14 +71,14 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Delete Video'),
-          content: Text('Are you sure you want to delete this video?'),
+          title: const Text('Delete Video'),
+          content: const Text('Are you sure you want to delete this video?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                 });
                 Navigator.of(context).pop();
               },
-              child: Text('Delete'),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -116,26 +116,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _showEmptySearchAlert() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Search Field Empty'),
-          content: Text('Please enter a title to search for videos.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                 padding: AppPaddings.all8,
                 child: CustomTextField(
                   hintText: AppStrings.searchHint,
-                  icon: Icon(Icons.search, color: AppColors.black87),
+                  icon: null,
                   controller: _searchController,
                 ),
               ),
@@ -164,69 +144,110 @@ class _HomePageState extends State<HomePage> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(AppBorders.radius),
+              padding: const EdgeInsets.all(16.0),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.8,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                 ),
-                height: MediaQuery.of(context).size.height,
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 1,
-                  ),
-                  itemCount: _filteredVideos.length,
-                  itemBuilder: (context, index) {
-                    final video = _filteredVideos[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VideoPlayerScreen(
-                              videoFile: File(video['videoFile']),
-                            ),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: GridTile(
-                          header: GridTileBar(
-                            leading: const Icon(Icons.play_arrow),
-                            backgroundColor: Colors.black54,
-                            title: Text(video['title']),
-                          ),
-                          footer: GridTileBar(
-                            backgroundColor: Colors.black54,
-                            leading: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.share),
-                                  onPressed: () {
-                                    _shareVideo(video['videoFile']);
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () {
-                                    _deleteVideo(index);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          child: Image.file(
-                            File(video['thumbnail']),
-                            fit: BoxFit.cover,
+                itemCount: _filteredVideos.length,
+                itemBuilder: (context, index) {
+                  final video = _filteredVideos[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VideoPlayerScreen(
+                            videoFile: File(video['videoFile']),
                           ),
                         ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppBorders.radius),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                        image: DecorationImage(
+                          image: FileImage(File(video['thumbnail'])),
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    );
-                  },
-                ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.vertical(
+                                    bottom: Radius.circular(AppBorders.radius)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        video['title'],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.share,
+                                            color: Colors.white),
+                                        onPressed: () {
+                                          _shareVideo(video['videoFile']);
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.white),
+                                        onPressed: () {
+                                          _deleteVideo(index);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: Icon(
+                              Icons.play_circle_outline,
+                              size: 64,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -281,95 +302,151 @@ class _AddVideoModalState extends State<AddVideoModal> {
     });
   }
 
+  void _showEmptyTitleAlert() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Empty Title'),
+          content: const Text('Please enter a title for the video.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Padding(
-            padding: AppPaddings.horizontal24,
-            child:
-                Text(AppStrings.enterKeyword, style: AppTextStyles.modalTitle),
-          ),
-          Padding(
-            padding: AppPaddings.horizontal24,
-            child: CustomTextField(
-              hintText: AppStrings.exampleHint,
-              icon: null,
-              controller: _titleController,
-            ),
-          ),
-          Padding(
-            padding: AppPaddings.horizontal24,
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              height: 150,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.red),
-                color: AppColors.lightRed,
-                borderRadius: BorderRadius.circular(AppBorders.radius),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context)
+                .viewInsets
+                .bottom), // Adjust padding to move above keyboard
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 24), // Add top padding
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(AppStrings.enterKeyword,
+                    style: AppTextStyles.modalTitle),
               ),
-              child: InkWell(
-                onTap: _pickVideo,
-                child: _videoFile == null
-                    ? const Padding(
-                        padding: AppPaddings.horizontal24,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
+              const SizedBox(height: 16), // Add spacing between elements
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: CustomTextField(
+                  hintText: AppStrings.exampleHint,
+                  icon: null,
+                  controller: _titleController,
+                ),
+              ),
+              const SizedBox(height: 16), // Add spacing between elements
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Container(
+                  width: double.infinity,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.red),
+                    color: AppColors.lightRed,
+                    borderRadius: BorderRadius.circular(AppBorders.radius),
+                  ),
+                  child: InkWell(
+                    onTap: _pickVideo,
+                    child: _videoFile == null
+                        ? Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Center(
-                                  child: Image(
-                                    height: 70,
-                                    image: AssetImage('assets/images/bg.png'),
-                                  ),
-                                ),
-                                Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.only(top: 8.5),
-                                    child: Image(
-                                      height: 40,
-                                      image:
-                                          AssetImage('assets/images/video.png'),
+                                Stack(
+                                  children: [
+                                    Center(
+                                      child: Image(
+                                        height: 70,
+                                        image:
+                                            AssetImage('assets/images/bg.png'),
+                                      ),
                                     ),
+                                    Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(top: 8.5),
+                                        child: Image(
+                                          height: 40,
+                                          image: AssetImage(
+                                              'assets/images/video.png'),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(AppStrings.selectVideo,
+                                    style: AppTextStyles.selectVideoText),
+                              ],
+                            ),
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 50,
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  "Video Added",
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ],
                             ),
-                            Text(AppStrings.selectVideo,
-                                style: AppTextStyles.selectVideoText),
-                          ],
-                        ),
-                      )
-                    : const Center(child: Text("Video Added")),
-              ),
-            ),
-          ),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                if (_titleController.text.isNotEmpty && _videoFile != null) {
-                  widget.onAddVideo(_titleController.text, _videoFile!);
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.9, 49),
-                backgroundColor:
-                    _videoFile == null ? AppColors.red : Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppBorders.radius),
+                          ),
+                  ),
                 ),
               ),
-              child: const Text(AppStrings.add,
-                  style: AppTextStyles.modalButtonText),
-            ),
+              const SizedBox(height: 16), // Add spacing between elements
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_titleController.text.isEmpty) {
+                      _showEmptyTitleAlert();
+                    } else if (_videoFile != null) {
+                      widget.onAddVideo(_titleController.text, _videoFile!);
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize:
+                        Size(MediaQuery.of(context).size.width * 0.9, 49),
+                    backgroundColor:
+                        _videoFile == null ? AppColors.red : Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppBorders.radius),
+                    ),
+                  ),
+                  child: const Text(AppStrings.add,
+                      style: AppTextStyles.modalButtonText),
+                ),
+              ),
+              const SizedBox(height: 24), // Add bottom padding
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -407,7 +484,34 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Video Player'),
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.share,
+              color: AppColors.black87,
+              size: 26,
+            ),
+            onPressed: () {
+              Share.shareXFiles([XFile(widget.videoFile.path)],
+                  text: 'Check out this video!');
+            },
+          ),
+        ],
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_outlined,
+            color: AppColors.black87,
+            size: 26,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        centerTitle: true,
+        title: const Text(
+          'VIDEO PLAYER',
+          style: AppTextStyles.appBarTitle,
+        ),
       ),
       body: Center(
         child: _controller.value.isInitialized

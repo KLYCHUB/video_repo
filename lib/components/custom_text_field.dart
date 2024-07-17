@@ -7,14 +7,18 @@ class CustomTextField extends StatelessWidget {
   final Icon? icon;
   final TextEditingController? controller;
 
-  const CustomTextField(
-      {required this.hintText, super.key, required this.icon, this.controller});
+  const CustomTextField({
+    required this.hintText,
+    super.key,
+    required this.icon,
+    this.controller,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      textAlign: TextAlign.start,
+      textAlign: TextAlign.center,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: AppTextStyles.hintStyle,
