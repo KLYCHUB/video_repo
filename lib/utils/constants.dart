@@ -7,4 +7,5 @@ class AppPaddings {
 
 class AppBorders {
   static const double radius = 16.0;
+  static const double radius12 = 12.0;
 }

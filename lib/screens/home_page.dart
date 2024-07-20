@@ -1,16 +1,17 @@
+// home_page.dart
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
+import 'package:video_repo/AddVideoModal/add_video_modal.dart';
+import 'package:video_repo/screens/video_player_screen.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:video_repo/components/custom_text_field.dart';
 import 'package:video_repo/localization/strings.dart';
-import 'package:video_repo/styles/styles.dart';
 import 'package:video_repo/utils/constants.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:video_repo/styles/app_colors.dart';
+import 'package:video_repo/styles/app_text_styles.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -98,8 +99,39 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _shareVideo(String videoFilePath) {
-    XFile videoFile = XFile(videoFilePath);
-    Share.shareXFiles([videoFile], text: 'Check out this video!');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final TextEditingController _messageController =
+            TextEditingController();
+        return AlertDialog(
+          title: const Text('Share Video'),
+          content: TextField(
+            controller: _messageController,
+            decoration: const InputDecoration(hintText: 'Enter your message'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                XFile videoFile = XFile(videoFilePath);
+                Share.shareXFiles([videoFile],
+                    text: _messageController.text.isNotEmpty
+                        ? _messageController.text
+                        : '');
+                Navigator.of(context).pop();
+              },
+              child: const Text('Share'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _filterVideos() {
@@ -258,6 +290,7 @@ class _HomePageState extends State<HomePage> {
           child: ElevatedButton(
             onPressed: () {
               showModalBottomSheet(
+                isScrollControlled: true,
                 context: context,
                 builder: (context) {
                   return AddVideoModal(onAddVideo: _addVideo);
@@ -277,252 +310,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class AddVideoModal extends StatefulWidget {
-  final Function(String, XFile) onAddVideo;
-
-  const AddVideoModal({required this.onAddVideo, super.key});
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _AddVideoModalState createState() => _AddVideoModalState();
-}
-
-class _AddVideoModalState extends State<AddVideoModal> {
-  final TextEditingController _titleController = TextEditingController();
-  XFile? _videoFile;
-
-  void _pickVideo() async {
-    final pickedFile =
-        await ImagePicker().pickVideo(source: ImageSource.gallery);
-    setState(() {
-      _videoFile = pickedFile;
-    });
-  }
-
-  void _showEmptyTitleAlert() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Empty Title'),
-          content: const Text('Please enter a title for the video.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context)
-                .viewInsets
-                .bottom), // Adjust padding to move above keyboard
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 24), // Add top padding
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(AppStrings.enterKeyword,
-                    style: AppTextStyles.modalTitle),
-              ),
-              const SizedBox(height: 16), // Add spacing between elements
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: CustomTextField(
-                  hintText: AppStrings.exampleHint,
-                  icon: null,
-                  controller: _titleController,
-                ),
-              ),
-              const SizedBox(height: 16), // Add spacing between elements
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Container(
-                  width: double.infinity,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.red),
-                    color: AppColors.lightRed,
-                    borderRadius: BorderRadius.circular(AppBorders.radius),
-                  ),
-                  child: InkWell(
-                    onTap: _pickVideo,
-                    child: _videoFile == null
-                        ? const Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Stack(
-                                  children: [
-                                    Center(
-                                      child: Image(
-                                        height: 70,
-                                        image:
-                                            AssetImage('assets/images/bg.png'),
-                                      ),
-                                    ),
-                                    Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.only(top: 8.5),
-                                        child: Image(
-                                          height: 40,
-                                          image: AssetImage(
-                                              'assets/images/video.png'),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(AppStrings.selectVideo,
-                                    style: AppTextStyles.selectVideoText),
-                              ],
-                            ),
-                          )
-                        : const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 50,
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Video Added",
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16), // Add spacing between elements
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_titleController.text.isEmpty) {
-                      _showEmptyTitleAlert();
-                    } else if (_videoFile != null) {
-                      widget.onAddVideo(_titleController.text, _videoFile!);
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize:
-                        Size(MediaQuery.of(context).size.width * 0.9, 49),
-                    backgroundColor:
-                        _videoFile == null ? AppColors.red : Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppBorders.radius),
-                    ),
-                  ),
-                  child: const Text(AppStrings.add,
-                      style: AppTextStyles.modalButtonText),
-                ),
-              ),
-              const SizedBox(height: 24), // Add bottom padding
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class VideoPlayerScreen extends StatefulWidget {
-  final File videoFile;
-
-  const VideoPlayerScreen({required this.videoFile, super.key});
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
-}
-
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.file(widget.videoFile)
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
-      });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.share,
-              color: AppColors.black87,
-              size: 26,
-            ),
-            onPressed: () {
-              Share.shareXFiles([XFile(widget.videoFile.path)],
-                  text: 'Check out this video!');
-            },
-          ),
-        ],
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_outlined,
-            color: AppColors.black87,
-            size: 26,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        centerTitle: true,
-        title: const Text(
-          'VIDEO PLAYER',
-          style: AppTextStyles.appBarTitle,
-        ),
-      ),
-      body: Center(
-        child: _controller.value.isInitialized
-            ? AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
-              )
-            : const CircularProgressIndicator(),
-      ),
     );
   }
 }
