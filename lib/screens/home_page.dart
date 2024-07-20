@@ -102,12 +102,12 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController _messageController =
+        final TextEditingController messageController =
             TextEditingController();
         return AlertDialog(
           title: const Text('Share Video'),
           content: TextField(
-            controller: _messageController,
+            controller: messageController,
             decoration: const InputDecoration(hintText: 'Enter your message'),
           ),
           actions: [
@@ -121,8 +121,8 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 XFile videoFile = XFile(videoFilePath);
                 Share.shareXFiles([videoFile],
-                    text: _messageController.text.isNotEmpty
-                        ? _messageController.text
+                    text: messageController.text.isNotEmpty
+                        ? messageController.text
                         : '');
                 Navigator.of(context).pop();
               },

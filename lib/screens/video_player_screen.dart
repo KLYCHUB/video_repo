@@ -12,6 +12,7 @@ class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({required this.videoFile, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
 }
 
@@ -61,12 +62,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  final TextEditingController _messageController =
+                  final TextEditingController messageController =
                       TextEditingController();
                   return AlertDialog(
                     title: const Text('Share Video'),
                     content: TextField(
-                      controller: _messageController,
+                      controller: messageController,
                       decoration:
                           const InputDecoration(hintText: 'Enter your message'),
                     ),
@@ -80,8 +81,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       TextButton(
                         onPressed: () {
                           Share.shareXFiles([XFile(widget.videoFile.path)],
-                              text: _messageController.text.isNotEmpty
-                                  ? _messageController.text
+                              text: messageController.text.isNotEmpty
+                                  ? messageController.text
                                   : 'Check out this video!');
                           Navigator.of(context).pop();
                         },
@@ -122,7 +123,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   VideoProgressIndicator(
                     _controller,
                     allowScrubbing: true,
-                    colors: VideoProgressColors(
+                    colors: const VideoProgressColors(
                       playedColor: AppColors.red,
                       bufferedColor: Colors.grey,
                       backgroundColor: Colors.black,

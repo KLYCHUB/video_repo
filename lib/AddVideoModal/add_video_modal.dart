@@ -13,6 +13,7 @@ class AddVideoModal extends StatefulWidget {
   const AddVideoModal({required this.onAddVideo, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AddVideoModalState createState() => _AddVideoModalState();
 }
 
